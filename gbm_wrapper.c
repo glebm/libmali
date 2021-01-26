@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdio.h>
 #include <xf86drm.h>
 #include <sys/mman.h>
 
@@ -213,6 +214,8 @@ gbm_bo_create(struct gbm_device *gbm,
               uint32_t width, uint32_t height,
               uint32_t format, uint32_t usage)
 {
+   printf("===== gbm_bo_create width=%u height=%u format=%08x usage=%08x\n",
+      width, height, format, usage);
    struct gbm_bo *bo;
 
    static struct gbm_bo * (*bo_create)();
@@ -220,9 +223,14 @@ gbm_bo_create(struct gbm_device *gbm,
       bo_create =
          (struct gbm_bo *(*)()) dlsym(RTLD_NEXT, "gbm_bo_create");
 
+   if (!bo_create) {
+      printf("==== bo_create not found!\n");
+   }
    bo = bo_create(gbm, width, height, format, usage);
-   if (!bo)
+   if (!bo) {
+      printf("==== bo_create failed, retrying with usage=0\n");
       bo = bo_create(gbm, width, height, format, 0);
+   }
 
    return bo;
 }
